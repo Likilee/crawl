@@ -6,16 +6,15 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-
-# ChromeDriver 경로 설정
-webdriver_service = Service('/path/to/chromedriver')
+from webdriver_manager.chrome import ChromeDriverManager
 
 # Chrome 옵션 설정
 chrome_options = Options()
 chrome_options.add_argument('--headless')  # 브라우저 창을 띄우지 않음
 
 # ChromeDriver 실행
-driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
+driver = webdriver.Chrome(service=Service(
+    ChromeDriverManager().install()), options=chrome_options)
 
 # 웹 페이지 로드
 url = "https://www.bandtrass.or.kr/customs/total.do?command=CUS001View&viewCode=CUS00101"
@@ -25,13 +24,14 @@ driver.get(url)
 wait = WebDriverWait(driver, 10)
 
 # tr 태그의 id가 1인 요소가 나타날 때까지 대기
-loading_tag = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, 'tr[role="row"][id="1"]')))
+loading_tag = wait.until(EC.visibility_of_element_located(
+    (By.CSS_SELECTOR, 'tr[role="row"][id="1"]')))
 
 # 대기가 완료되면 해당 tr 태그를 가져오기
 table = driver.find_element(By.CSS_SELECTOR, 'table[id="table_list_1"]')
 
 # tr 태그의 내용 출력
-table_data = table.get_attribute('outerHTML');
+table_data = table.get_attribute('outerHTML')
 # content = table.get_attribute("innerHTML")
 print(table_data)
 
@@ -50,7 +50,7 @@ data = []
 for row in rows:
     # 행의 모든 셀을 선택
     cells = row.find_all('td')
-    
+
     # 셀 데이터 추출
     year = cells[0].text.strip().replace('년', '')
     month = cells[0].find_next('td').text.strip().replace('월', '')
@@ -61,9 +61,10 @@ for row in rows:
     im_incre_ratio = cells[5].text.strip()
     mon_im_incre_ratio = cells[6].text.strip()
     trade_val = cells[7].text.strip().replace(',', '')
-    
+
     # 추출한 데이터를 리스트에 추가
-    data.append([year, month, ex_val, ex_incre_ratio, mon_ex_incre_ratio, im_val, im_incre_ratio, mon_im_incre_ratio, trade_val])
+    data.append([year, month, ex_val, ex_incre_ratio, mon_ex_incre_ratio,
+                im_val, im_incre_ratio, mon_im_incre_ratio, trade_val])
 
 # 데이터프레임 생성
 df = pd.DataFrame(data, columns=['Year', 'Month', 'Export Value', 'Export Increase Ratio',
@@ -78,3 +79,7 @@ with open("test.html", "w", encoding="utf-8") as file:
 
 # WebDriver 종료
 driver.quit()
+
+# 생성된 엑셀 파일 출력
+df = pd.read_excel('test.xlsx')
+print(df)
